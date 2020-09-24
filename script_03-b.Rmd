@@ -42,6 +42,9 @@ sep_new <-
   group_by(id, title, name, department) %>% 
   summarize(u_grad = sum(u_grad), .groups = "drop") %>% 
   filter(u_grad > 10)
+
+view(sep_old)
+view(sep_new)
 ```
 
 ### Scene 1
@@ -50,9 +53,47 @@ sep_new <-
 
 a) Make a table using **gt** which shows the five courses with the biggest increase. Use the [How to make a table](https://davidkane9.github.io/PPBDS/tools.html#how-to-make-a-table) section of *The Primer*.
 
+```{r}
+ugrad_diff <- inner_join(sep_old, sep_new, by = "id") %>% 
+  select(-department.y, -title.y, -name.y) %>%
+  mutate(diff = u_grad.y - u_grad.x) %>% 
+  arrange(desc(diff))
+
+ugrad_diff
+
+ugrad_diff %>% 
+  slice(1:5) %>% 
+  gt()
+
+```
+
 b) Make a table using **gt** which shows the five courses with the biggest decrease.
 
+```{r}
+ugrad_diff %>% 
+  arrange(diff) %>% 
+  slice(1:5) %>% 
+  gt()
+```
+
 c) Make a nice looking graphic which shows these 10 courses.
+
+```{r}
+sep_joined_for_graph <- ugrad_diff %>%
+  slice(1:5, 412:416) %>%
+  mutate(positive = ifelse(diff > 0, "Increase", "Decrease")) %>%
+  mutate(ugrad_diff_abs = abs(diff)) %>%
+  group_by(positive) %>%
+  ggplot(aes(name.x, abs(diff))) +
+  geom_col() +
+  facet_wrap(~positive, scales = "free") +
+  coord_flip() +
+  theme_bw()
+
+sep_joined_for_graph
+
+```
+
 
 d) Write down some thoughts about what might explain these increases and decreases. Or is it all just random? How would we know?
 
